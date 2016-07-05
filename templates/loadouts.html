@@ -12,13 +12,13 @@
       <tr>
         <th>Faction</th>
         <th>Pilot</th>
-      </tr>safe
+      </tr>
   </thead>
   <tbody>
     {% for a in loadouts %}
         <tr>
-            <td>{{ a[1] | safe }}</td>
-            <td>{{ a[2] }}</td>
+            <td>{{ a[0] }}</td>
+            <td>{{ a[1] }}</td>
         </tr>
     {% endfor %}
     </tbody>

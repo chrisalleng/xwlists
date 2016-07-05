@@ -870,7 +870,7 @@ def loadouts():
         pm = PersistenceManager(myapp.db_connector)
         pilots_by_faction = pm.get_pilots_by_faction()
         simple_cache.set('loadouts', loadouts, timeout=60*60*12)
-    return render_template("loadouts.html", loadouts=loadouts)
+    return render_template("loadouts.html", loadouts=pilots_by_faction)
 
 
 @app.route("/get_tourney_details")
