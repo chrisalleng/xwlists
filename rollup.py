@@ -663,6 +663,7 @@ class ShipPilotTimeSeriesData:
         if calculate_ship_pilot:
             self.ship_pilot_time_series_data = pm.get_ship_pilot_rollup(tourney_filters,show_the_cut_only)
             self.pilot_upgrade_time_series_data = pm.get_pilot_upgrade_rollups( tourney_filters,show_the_cut_only )
+            #self.get_ship_loadouts = pm.get_ship_loadouts(tourney_filters)
             self.visit_time_series_data( self.ship_pilot_time_series_data)
             self.visit_time_series_data(self.pilot_upgrade_time_series_data)
 
@@ -841,3 +842,192 @@ class ShipPilotTimeSeriesData:
                 else: #full pilot row
                     self.visit_pilot_total(year, month,faction,ship,pilot,cnt,cost)
 
+
+#TODO it's here
+
+class ShipPilotUpgradeData:
+    def __init__(self, pm,
+                 tourney_filters=None,
+                 calculate_ship_pilot=True):
+        self.pm               = pm
+        self.pilots           = {}
+        self.upgrade_pilots   = {}
+
+        self.ship_pilot_time_series_data = pm.get_ship_pilot_rollup(tourney_filters,true)
+        self.pilot_upgrade_time_series_data = pm.get_pilot_upgrade_rollups( tourney_filters,true )
+        self.visit_time_series_data( self.ship_pilot_time_series_data)
+        self.visit_time_series_data(self.pilot_upgrade_time_series_data)
+
+        self.upgrade_time_series_data = pm.get_upgrade_rollups( tourney_filters, show_the_cut_only)
+        self.visit_upgrade_rollups(self.upgrade_time_series_data )
+
+
+    def is_grand_total(self, faction, ship, pilot):
+        return faction is None and ship is None and pilot is None
+
+    def is_faction_total(self, faction, ship, pilot):
+        return faction is not None and ship is None and pilot is None
+
+    def is_ship_total(self, faction, ship, pilot):
+       return faction is not None and ship is not None and pilot is None
+
+    def visit_grand_total(self, year, month, cnt, cost):
+        year_mo = str(year) + "-" + str(month)
+        datapoint = 0
+        if self.show_as_count:
+            datapoint = cnt
+        else:
+            datapoint = cost
+
+        if not self.grand_total_data.has_key( year_mo):
+            self.grand_total_data[year_mo] = None
+
+        if self.grand_total_data[year_mo] is None:
+            self.grand_total_data[year_mo] = datapoint
+
+        else:
+            self.grand_total_data[year_mo] += datapoint
+
+    def visit_pilot_total(self, year, month, faction,ship,pilot,cnt,cost):
+        year_mo = str(year) + "-" + str(month)
+        datapoint = 0
+        if self.show_as_count:
+            datapoint = cnt
+        else:
+            datapoint = cost
+        if not self.pilot_data.has_key(faction):
+            self.pilot_data[faction] = collections.OrderedDict()
+
+        if not self.pilot_data[faction].has_key(ship):
+            self.pilot_data[faction][ship] = collections.OrderedDict()
+
+        if not self.pilot_data[faction][ship].has_key(pilot):
+            self.pilot_data[faction][ship][pilot] = collections.OrderedDict()
+
+        if not self.pilot_data[faction][ship][pilot].has_key(year_mo):
+            self.pilot_data[faction][ship][pilot][year_mo] = 0
+
+        self.pilot_data[faction][ship][pilot][year_mo] += datapoint
+
+    def visit_ship_total(self, year, month, faction, ship, cnt,cost):
+        year_mo = str(year) + "-" + str(month)
+        datapoint = 0
+        if self.show_as_count:
+            datapoint = cnt
+        else:
+            datapoint = cost
+
+        if not self.ship_data.has_key(faction):
+            self.ship_data[faction] = collections.OrderedDict()
+
+        if not self.ship_data[faction].has_key(ship):
+            self.ship_data[faction][ship] = collections.OrderedDict()
+
+        if not self.ship_data[faction][ship].has_key(year_mo):
+            self.ship_data[faction][ship][year_mo] = 0
+
+        self.ship_data[faction][ship][year_mo] += datapoint
+
+    def visit_faction_total(self, year, month, faction,cnt, cost):
+        year_mo = str(year) + "-" + str(month)
+        datapoint = 0
+        if self.show_as_count:
+            datapoint = cnt
+        else:
+            datapoint = cost
+
+        if not self.faction_data.has_key(faction):
+            self.faction_data[faction] = collections.OrderedDict()
+
+        data_by_faction = self.faction_data[faction]
+
+        if not data_by_faction.has_key( year_mo):
+            data_by_faction[year_mo] = None
+
+        if data_by_faction[year_mo] is None:
+            data_by_faction[year_mo] = datapoint
+
+        else:
+            data_by_faction[year_mo] += datapoint
+
+    def visit_upgrade_rollups(self, upgrade_time_series_data):
+        for row in upgrade_time_series_data:
+            year    = row[0]
+            month   = row[1]
+            faction = row[2].description
+            ship    = row[3].description
+            pilot   = row[4]
+            upgrade_type = row[5].description
+            upgrade = row[6]
+            cnt     = int(row[7])
+            cost    = int(row[8])
+
+            datapoint = 0
+            if self.show_as_count:
+                datapoint = cnt
+            else:
+                datapoint = cost
+
+            #refit :-)
+            if datapoint < 0:
+                datapoint = 0
+
+            self.upgrade_pilots[pilot] = 1
+            self.upgrade_ships[ship] = 1
+
+            if not self.upgrade_types.has_key(upgrade_type):
+                self.upgrade_types[upgrade_type] = 1
+
+            self.upgrade_name_to_type[upgrade] = upgrade_type
+
+            year_mo = str(year) + "-" + str(month)
+
+            if not self.upgrade_data.has_key(faction):
+                self.upgrade_data[faction] = collections.OrderedDict()
+
+            if not self.upgrade_data[faction].has_key(ship):
+                self.upgrade_data[faction][ship] = collections.OrderedDict()
+
+            if not self.upgrade_data[faction][ship].has_key(pilot):
+                self.upgrade_data[faction][ship][pilot] = collections.OrderedDict()
+
+            if not self.upgrade_data[faction][ship][pilot].has_key(upgrade_type):
+                self.upgrade_data[faction][ship][pilot][upgrade_type] = collections.OrderedDict()
+
+            if not self.upgrade_data[faction][ship][pilot][upgrade_type].has_key(upgrade):
+                self.upgrade_data[faction][ship][pilot][upgrade_type][upgrade] = collections.OrderedDict()
+
+            if not self.upgrade_data[faction][ship][pilot][upgrade_type][upgrade].has_key(year_mo):
+                self.upgrade_data[faction][ship][pilot][upgrade_type][upgrade][year_mo] = collections.OrderedDict()
+
+            if not self.upgrade_data[faction][ship][pilot][upgrade_type][upgrade][year_mo].has_key(year_mo):
+                self.upgrade_data[faction][ship][pilot][upgrade_type][upgrade][year_mo] = 0 #epic
+
+            self.upgrade_data[faction][ship][pilot][upgrade_type][upgrade][year_mo]  += datapoint
+
+
+    def visit_time_series_data(self, time_series_data):
+        for row in time_series_data:
+            year    = row[0]
+            month   = row[1]
+            faction = row[2]
+            ship    = row[3]
+            pilot   = row[4]
+            cnt     = int(row[5])
+            cost    = int(row[6])
+
+            if faction is not None:
+                faction = faction.description
+
+            if ship is not None:
+                ship = ship.description
+
+            if year is not None and month is not None: #the rollup actually rolls up year and month!
+                if self.is_grand_total( faction, ship, pilot):
+                    self.visit_grand_total(year, month, cnt, cost)
+                elif self.is_faction_total( faction, ship, pilot ):
+                    self.visit_faction_total(year, month,faction,cnt, cost)
+                elif self.is_ship_total( faction, ship, pilot):
+                    self.visit_ship_total( year, month,faction, ship, cnt,cost)
+                else: #full pilot row
+                    self.visit_pilot_total(year, month,faction,ship,pilot,cnt,cost)

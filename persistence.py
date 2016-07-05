@@ -1740,3 +1740,40 @@ class PersistenceManager:
                     ors.append( Tourney.tourney_type == ('%s' % tt) )
             filters.append( or_( *ors ))
 
+    def get_ship_loadouts(self, tourney_filters):
+
+        session = self.db_connector.get_session()
+
+        filters = [
+            TourneyList.tourney_id == Tourney.id,
+            ArchtypeList.id == TourneyList.archtype_id,
+            Ship.archtype_id == ArchtypeList.id,
+            Ship.ship_pilot_id == ShipPilot.id,
+            ShipPilot.pilot_id == Pilot.id
+        ]
+
+        filters.append(TourneyRanking.tourney_id == Tourney.id)
+        filters.append(TourneyList.player_id == TourneyRanking.player_id)
+        filters.append(TourneyRanking.elim_rank != None)
+
+        if tourney_filters is not None:
+            self.apply_tourney_type_filter(filters, tourney_filters)
+
+        year = sqlalchemy.extract('year', Tourney.tourney_date)
+        month = sqlalchemy.extract('month', Tourney.tourney_date)
+        ship_loadout_rollup_sql = session.query(
+            year.label("year"),
+            month.label("month"),
+            ArchtypeList.faction, ShipPilot.ship_type, Pilot.pilot_skill, ShipUpgrade.upgrade,
+            func.count(Pilot.pilot_skill).label("count")). \
+            filter(and_(*filters)). \
+            group_by(
+            year,
+            month,
+            ArchtypeList.faction, ShipPilot.ship_type, Pilot.pilot_skill, ShipUpgrade.upgrade). \
+            statement.compile(dialect=mysql.dialect())
+
+        connection = self.db_connector.get_engine().connect()
+        ship_pilot_rollup = connection.execute(ship_loadout_rollup_sql)
+        return ship_pilot_rollup
+
