@@ -862,6 +862,15 @@ def update_tourney_details():
     return redirect( url_for( 'get_tourney_details', tourney_id=tourney_id) )
 
 
+@app.route("/loadouts")
+def loadouts():
+    loadouts = simple_cache.get('archtypes')
+    if archtypes is None:
+        pm = PersistenceManager(myapp.db_connector)
+        loadouts = pm.get_ranked_archtypes(request.url_root)
+        simple_cache.set('loadouts', loadouts, timeout=60*60*12)
+    return render_template("loadouts.html", loadouts=loadouts)
+
 
 @app.route("/get_tourney_details")
 def get_tourney_details():
@@ -1958,4 +1967,4 @@ if __name__ == '__main__':
             app.debug = False
     else:
         app.debug = False
-    app.run(port=5002)
+    app.run(host='0.0.0.0', port=5002)
