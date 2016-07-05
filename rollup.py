@@ -400,6 +400,7 @@ class PilotHighchartOptions:
 
     def finalize(self, ship_pilot_time_series_data,pilots_and_factions,imperial_checked, rebel_checked, scum_checked,top_10_only):
         #stupid boba fett, why must you exist in two factions? :-)
+        #thanks for nothing, Sabine
         pilot_factions = {}
         for rec in pilots_and_factions:
             faction = rec[0]

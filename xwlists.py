@@ -865,13 +865,23 @@ def update_tourney_details():
 
 @app.route("/loadouts")
 def loadouts():
-    loadouts = simple_cache.get('pilots_by_faction')
-    if loadouts is None:
-        pm = PersistenceManager(myapp.db_connector)
-        pilots_by_faction = pm.get_pilots_by_faction()
-        simple_cache.set('loadouts', loadouts, timeout=60*60*12)
-    return render_template("loadouts.html", loadouts=pilots_by_faction)
+    pm               = PersistenceManager(myapp.db_connector)
+    pcd              = ShipPilotTimeSeriesData( pm, calculate_upgrades=True, show_the_cut_only=True )
 
+    pilots_by_faction = pm.get_pilots_by_faction()
+    tourney_types = pm.get_tourney_types()
+    tt = []
+    for tourney_type in tourney_types:
+        tt.append( tourney_type[0])
+
+    return render_template("loadouts.html",
+                           upgrade_types=sorted(pcd.upgrade_types.keys()),
+                           upgrade_name_to_type=pcd.upgrade_name_to_type,
+                           tourney_types=tt,
+                           scum=Faction.SCUM.description,
+                           rebel=Faction.REBEL.description,
+                           imperial=Faction.IMPERIAL.description,
+                           loadouts=pilots_by_faction)
 
 @app.route("/get_tourney_details")
 def get_tourney_details():
