@@ -10,18 +10,15 @@
   <table id="loadouts" class="display" cellspacing="0" width="100%">
   <thead>
       <tr>
-        <th>Points</th>
+        <th>Faction</th>
         <th>Pilot</th>
-        <th>Ship</th>
-        <th>Upgrades</th>
-      </tr>
+      </tr>safe
   </thead>
   <tbody>
-    {% for a in archtypes %}
+    {% for a in loadouts %}
         <tr>
             <td>{{ a[1] | safe }}</td>
             <td>{{ a[2] }}</td>
-            <td>{{ a[3] }}</td>
         </tr>
     {% endfor %}
     </tbody>

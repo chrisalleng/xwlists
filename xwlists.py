@@ -707,6 +707,7 @@ def get_tourney_results():
 @app.route("/archtypes")
 def archtypes():
     archtypes = simple_cache.get('archtypes')
+    archtypes = simple_cache.get('archtypes')
     if archtypes is None:
         pm = PersistenceManager(myapp.db_connector)
         archtypes = pm.get_ranked_archtypes(request.url_root)
@@ -864,10 +865,10 @@ def update_tourney_details():
 
 @app.route("/loadouts")
 def loadouts():
-    loadouts = simple_cache.get('archtypes')
-    if archtypes is None:
+    loadouts = simple_cache.get('pilots_by_faction')
+    if loadouts is None:
         pm = PersistenceManager(myapp.db_connector)
-        loadouts = pm.get_ranked_archtypes(request.url_root)
+        pilots_by_faction = pm.get_pilots_by_faction()
         simple_cache.set('loadouts', loadouts, timeout=60*60*12)
     return render_template("loadouts.html", loadouts=loadouts)
 
